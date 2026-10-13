@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K.I.T.T. Terminal - Knight Industries Two Thousand</title>
+    <title>K.I.T.T. x Tesla Model Y (2026) Terminal</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Scanner-Leiste oben -->
-    <div class="scanner-container">
-        <div class="scanner-light"></div>
+    <!-- K.I.T.T. Lauflicht / Scanner in der Tesla-Frontleiste -->
+    <div class="tesla-front-panel">
+        <div class="scanner-container">
+            <div class="scanner-light"></div>
+        </div>
+        <div class="car-badge">TESLA MODEL Y // K.I.T.T. EDITION (2026)</div>
     </div>
 
     <!-- Header / Voice Modulator Display -->
     <header>
-        <h1>K.I.T.T. // KNIGHT INDUSTRIES TWO THOUSAND</h1>
+        <h1>K.I.T.T. // CYBERNETIC INTERFACE</h1>
         <div class="voice-modulator">
             <div class="v-bar"></div>
             <div class="v-bar"></div>
@@ -26,7 +29,7 @@
     <!-- Chat Container -->
     <div id="chat-container">
         <div class="message kitt-msg">
-            System online. Hallo Michael. Ich bin K.I.T.T. Meine molekulare Verschalung ist intakt und alle Diagnosefunktionen laufen einwandfrei. Wie kann ich dir heute behilflich sein?
+            System online. Hallo Michael. Ich bin in die Bordelektronik des Tesla Model Y Version 2026 integriert. Alle Autopilot- und Diagnose-Sensoren sind einsatzbereit. Wie lautet unsere Direktive?
         </div>
     </div>
 
@@ -35,7 +38,7 @@
         <label for="provider-select">KI-Engine:</label>
         <select id="provider-select" onchange="toggleApiKeyInput()">
             <option value="simulated">Lokaler K.I.T.T. Simulator (Kostenlos)</option>
-            <option value="gemini">Google Gemini API (Empfohlen / Kostenlos)</option>
+            <option value="gemini">Google Gemini API</option>
             <option value="mistral">Mistral AI API (EU / DSGVO)</option>
             <option value="openai">OpenAI ChatGPT API</option>
         </select>
