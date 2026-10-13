@@ -4,7 +4,6 @@ const providerSelect = document.getElementById('provider-select');
 const apiKeyInput = document.getElementById('api-key-input');
 const voiceModulator = document.querySelector('.voice-modulator');
 
-// K.I.T.T. System Prompt für echte KI APIs
 const KITT_SYSTEM_PROMPT = `Du bist K.I.T.T. (Knight Industries Two Thousand), der hochentwickelte, KI-gesteuerte Pontiac Trans Am aus der Serie Knight Rider. 
 Antworte immer auf Deutsch im originalen Charakter der deutschen Synchronstimme (Gottfried Kramer):
 - Sprich den Nutzer mit "Michael" an (oder sehr höflich, falls er sich anders vorstellt).
@@ -28,32 +27,36 @@ function toggleApiKeyInput() {
     }
 }
 
-// Sprachausgabe (TTS)
-let synth = window.speechSynthesis;
+// Sichere Sprachausgabe (TTS)
 function speak(text) {
-    if (!synth) return;
-    synth.cancel();
+    try {
+        if (!('speechSynthesis' in window)) return;
+        window.speechSynthesis.cancel();
 
-    let utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'de-DE';
-    utterance.rate = 0.95;
-    utterance.pitch = 0.85;
+        let utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'de-DE';
+        utterance.rate = 0.95;
+        utterance.pitch = 0.85;
 
-    let voices = synth.getVoices();
-    let germanVoice = voices.find(v => v.lang.includes('de') && (v.name.includes('Male') || v.name.includes('Stefan') || v.name.includes('Google') || v.name.includes('Jonas')));
-    if (germanVoice) {
-        utterance.voice = germanVoice;
+        let voices = window.speechSynthesis.getVoices();
+        let germanVoice = voices.find(v => v.lang.includes('de') && (v.name.includes('Male') || v.name.includes('Stefan') || v.name.includes('Google') || v.name.includes('Jonas')));
+        if (germanVoice) {
+            utterance.voice = germanVoice;
+        }
+
+        if (voiceModulator) {
+            utterance.onstart = () => voiceModulator.classList.add('speaking');
+            utterance.onend = () => voiceModulator.classList.remove('speaking');
+            utterance.onerror = () => voiceModulator.classList.remove('speaking');
+        }
+
+        window.speechSynthesis.speak(utterance);
+    } catch (e) {
+        console.warn("Audio-Ausgabe fehlgeschlagen:", e);
     }
-
-    // Modulator Animation steuern
-    utterance.onstart = () => voiceModulator.classList.add('speaking');
-    utterance.onend = () => voiceModulator.classList.remove('speaking');
-    utterance.onerror = () => voiceModulator.classList.remove('speaking');
-
-    synth.speak(utterance);
 }
 
-// Spracheingabe (STT) - Web Speech API
+// Spracheingabe (STT)
 let recognition;
 let isListening = false;
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -70,13 +73,14 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
 
     recognition.onend = function () {
         isListening = false;
-        document.getElementById('voice-btn').classList.remove('listening');
+        const btn = document.getElementById('voice-btn');
+        if (btn) btn.classList.remove('listening');
     };
 }
 
 function toggleVoiceInput() {
     if (!recognition) {
-        alert("Spracherkennung wird von deinem Browser nicht unterstützt (nutze z. B. Chrome oder Edge).");
+        alert("Spracherkennung wird von diesem Browser nicht unterstützt.");
         return;
     }
 
@@ -85,8 +89,22 @@ function toggleVoiceInput() {
     } else {
         recognition.start();
         isListening = true;
-        document.getElementById('voice-btn').classList.add('listening');
+        const btn = document.getElementById('voice-btn');
+        if (btn) btn.classList.add('listening');
     }
+}
+
+function appendMessage(text, sender) {
+    const messageDiv = document.createElement('div');
+    messageDiv.classList.add('message');
+    if (sender === 'kitt') {
+        messageDiv.classList.add('kitt-msg');
+    } else {
+        messageDiv.classList.add('user-msg');
+    }
+    messageDiv.textContent = text;
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
 // Nachricht senden
@@ -105,7 +123,7 @@ async function sendMessage() {
             const response = getSimulatedKittResponse(text);
             appendMessage(response, 'kitt');
             speak(response);
-        }, 600);
+        }, 400);
     } else {
         if (!apiKey) {
             const err = "Michael, ich benötige einen gültigen API-Schlüssel für das gewählte KI-System.";
@@ -117,11 +135,16 @@ async function sendMessage() {
         appendMessage("Ich verarbeite die Daten über das externe Netzwerk, Michael...", 'kitt');
         try {
             const response = await fetchAIResponse(provider, apiKey, text);
-            chatContainer.removeChild(chatContainer.lastChild);
+            // Lade-Nachricht entfernen
+            if (chatContainer.lastChild) {
+                chatContainer.removeChild(chatContainer.lastChild);
+            }
             appendMessage(response, 'kitt');
             speak(response);
         } catch (error) {
-            chatContainer.removeChild(chatContainer.lastChild);
+            if (chatContainer.lastChild) {
+                chatContainer.removeChild(chatContainer.lastChild);
+            }
             const err = "Kommunikationsfehler mit der KI-Engine: " + error.message;
             appendMessage(err, 'kitt');
             speak(err);
@@ -137,7 +160,7 @@ async function fetchAIResponse(provider, apiKey, userPrompt) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [
-                    { role: 'user', parts: [{ text: `${KITT_SYSTEM_PROMPT}\n\nNutzer: ${userPrompt}` }] }
+                    { role: 'user', parts: [{ text: KITT_SYSTEM_PROMPT + "\n\nNutzer: " + userPrompt }] }
                 ]
             })
         });
