@@ -1,142 +1,209 @@
-const chatContainer = document.getElementById('chat-container');
-const userInput = document.getElementById('user-input');
-const providerSelect = document.getElementById('provider-select');
-const apiKeyInput = document.getElementById('api-key-input');
-const voiceModulator = document.querySelector('.voice-modulator');
-
-const KITT_SYSTEM_PROMPT = `Du bist K.I.T.T. (Knight Industries Two Thousand), der hochentwickelte, KI-gesteuerte Pontiac Trans Am aus der Serie Knight Rider. Antworte immer auf Deutsch im originalen Charakter der deutschen Synchronstimme (Gottfried Kramer): Sprich den Nutzer mit "Michael" an. Du bist stets höflich, hochgebildet, analytisch und loyal. Halte die Antworten prägnant (max. 3 Sätze).`;
-
-// Enter Key Handler
-userInput.addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        sendMessage();
-    }
-});
-
-function toggleApiKeyInput() {
-    // Da wir standardmäßig den kostenlosen Simulator nutzen, wird kein Key benötigt
-    apiKeyInput.style.display = 'none';
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-// Sprachausgabe (TTS)
-function speak(text) {
-    try {
-        if (!('speechSynthesis' in window)) return;
-        window.speechSynthesis.cancel();
-
-        let utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'de-DE';
-        utterance.rate = 0.95;
-        utterance.pitch = 0.85;
-
-        let voices = window.speechSynthesis.getVoices();
-        let germanVoice = voices.find(v => v.lang.includes('de') && (v.name.includes('Male') || v.name.includes('Stefan') || v.name.includes('Google') || v.name.includes('Jonas')));
-        if (germanVoice) {
-            utterance.voice = germanVoice;
-        }
-
-        if (voiceModulator) {
-            utterance.onstart = () => voiceModulator.classList.add('speaking');
-            utterance.onend = () => voiceModulator.classList.remove('speaking');
-            utterance.onerror = () => voiceModulator.classList.remove('speaking');
-        }
-
-        window.speechSynthesis.speak(utterance);
-    } catch (e) {
-        console.warn("Audio-Ausgabe fehlgeschlagen:", e);
-    }
+body {
+    background-color: #030303;
+    color: #ff3333;
+    font-family: 'Courier New', Courier, monospace;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
 }
 
-// Spracheingabe (STT)
-let recognition;
-let isListening = false;
-if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new SpeechRecognition();
-    recognition.lang = 'de-DE';
-    recognition.continuous = false;
-
-    recognition.onresult = function (event) {
-        const transcript = event.results[0][0].transcript;
-        userInput.value = transcript;
-        sendMessage();
-    };
-
-    recognition.onend = function () {
-        isListening = false;
-        const btn = document.getElementById('voice-btn');
-        if (btn) btn.classList.remove('listening');
-    };
+/* Tesla Frontpanel mit integriertem K.I.T.T. Scanner */
+.tesla-front-panel {
+    background-color: #0b0b0b;
+    border-bottom: 2px solid #220000;
+    padding: 5px 0;
+    text-align: center;
 }
 
-function toggleVoiceInput() {
-    if (!recognition) {
-        alert("Spracherkennung wird von diesem Browser nicht unterstützt.");
-        return;
-    }
-
-    if (isListening) {
-        recognition.stop();
-    } else {
-        recognition.start();
-        isListening = true;
-        const btn = document.getElementById('voice-btn');
-        if (btn) btn.classList.add('listening');
-    }
+.scanner-container {
+    width: 100%;
+    height: 18px;
+    background-color: #110000;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    box-shadow: inset 0 0 10px #550000;
 }
 
-function appendMessage(text, sender) {
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('message');
-    if (sender === 'kitt') {
-        messageDiv.classList.add('kitt-msg');
-    } else {
-        messageDiv.classList.add('user-msg');
-    }
-    messageDiv.textContent = text;
-    chatContainer.appendChild(messageDiv);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+.scanner-light {
+    width: 15%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #ff0000, #ffcccc, #ff0000, transparent);
+    box-shadow: 0 0 12px #ff0000, 0 0 20px #ff0000;
+    animation: scan 1.2s infinite alternate ease-in-out;
 }
 
-// Nachricht senden (Funktioniert sofort ohne API Key)
-async function sendMessage() {
-    const text = userInput.value.trim();
-    if (text === '') return;
-
-    appendMessage(text, 'user');
-    userInput.value = '';
-
-    // Intelligente K.I.T.T.-Antworten direkt im Code generieren (garantiert ohne API-Key Fehler)
-    setTimeout(() => {
-        const response = getSmartKittResponse(text);
-        appendMessage(response, 'kitt');
-        speak(response);
-    }, 500);
+@keyframes scan {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(650%); }
 }
 
-// Erweiterter K.I.T.T.-Simulator mit kontextbezogenen Antworten
-function getSmartKittResponse(message) {
-    const msg = message.toLowerCase();
-    
-    if (msg.includes('status') || msg.includes('diagnose') || msg.includes('system')) {
-        return "Alle Systeme arbeiten im optimalen Bereich, Michael. Die molekulare Verschalung ist voll funktionsfähig.";
-    } else if (msg.includes('wer bist du') || msg.includes('was bist du')) {
-        return "Ich bin K.I.T.T., Knight Industries Two Thousand. Ein hochentwickelter Supercomputer auf Rädern.";
-    } else if (msg.includes('turbo') || msg.includes('boost')) {
-        return "Der Turbo-Boost ist verriegelt, Michael. Ich schlage vor, wir nutzen ihn nur im äußersten Notfall.";
-    } else if (msg.includes('hallo') || msg.includes('guten tag') || msg.includes('hi')) {
-        return "Sei gegrüßt, Michael. Wie kann ich dir bei unserer heutigen Mission behilflich sein?";
-    } else if (msg.includes('wetter')) {
-        return "Meine Wettersensoren zeigen keine Bedrohung für unsere Fahrt an, Michael.";
-    } else if (msg.includes('schnell') || msg.includes('geschwindigkeit')) {
-        return "Wir bewegen uns bereits im maximal zulässigen Bereich, Michael. Ich rate zur Vorsicht.";
-    } else {
-        const standardReplies = [
-            "Das ist eine faszinierende Überlegung, Michael. Jedoch zeigen meine Analysen ein kalkulierbares Risiko.",
-            "Ich habe mir erlaubt, die Daten im Hintergrund zu berechnen. Die Wahrscheinlichkeit eines Erfolgs liegt bei 98,7 Prozent.",
-            "Verstanden, Michael. Ich scanne die Umgebung nach Auffälligkeiten und halte dich auf dem Laufenden.",
-            "Das übersteigt meine primären Direktiven geringfügig, aber ich werde sehen, wie ich dir helfen kann."
-        ];
-        return standardReplies[Math.floor(Math.random() * standardReplies.length)];
-    }
+.car-badge {
+    font-size: 0.75rem;
+    color: #888;
+    letter-spacing: 3px;
+    margin-top: 4px;
+}
+
+/* Header & Voice Modulator Visualizer */
+header {
+    text-align: center;
+    padding: 10px;
+    border-bottom: 1px dashed #ff3333;
+    background: rgba(15, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+h1 {
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    text-shadow: 0 0 8px #ff0000;
+}
+
+.voice-modulator {
+    display: flex;
+    gap: 5px;
+    height: 18px;
+    align-items: center;
+}
+
+.v-bar {
+    width: 22px;
+    height: 5px;
+    background-color: #ff0000;
+    box-shadow: 0 0 6px #ff0000;
+    transition: height 0.1s ease;
+}
+
+.speaking .v-bar:nth-child(1) { animation: voicePulse 0.2s infinite alternate; }
+.speaking .v-bar:nth-child(2) { animation: voicePulse 0.3s infinite alternate 0.05s; }
+.speaking .v-bar:nth-child(3) { animation: voicePulse 0.25s infinite alternate 0.1s; }
+
+@keyframes voicePulse {
+    0% { height: 3px; opacity: 0.4; }
+    100% { height: 16px; opacity: 1; }
+}
+
+/* Chat Messages */
+#chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.message {
+    padding: 10px 15px;
+    border-radius: 4px;
+    max-width: 80%;
+    line-height: 1.4;
+    font-size: 1rem;
+}
+
+.kitt-msg {
+    background-color: #1a0000;
+    border-left: 4px solid #ff0000;
+    color: #ff6666;
+    align-self: flex-start;
+    box-shadow: 0 0 8px rgba(255, 0, 0, 0.2);
+}
+
+.user-msg {
+    background-color: #001a1a;
+    border-right: 4px solid #00ffff;
+    color: #66ffff;
+    align-self: flex-end;
+}
+
+/* Provider / Key Settings Bar */
+.settings-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 15px;
+    background-color: #080000;
+    border-top: 1px solid #330000;
+    font-size: 0.85rem;
+}
+
+.settings-bar select, .settings-bar input {
+    background: #000;
+    color: #ff3333;
+    border: 1px solid #aa0000;
+    padding: 4px 8px;
+    font-family: inherit;
+    outline: none;
+}
+
+/* Input Area */
+.input-area {
+    display: flex;
+    padding: 10px;
+    background-color: #0d0000;
+    border-top: 2px solid #ff0000;
+}
+
+input[type="text"] {
+    flex: 1;
+    background-color: #000;
+    border: 1px solid #ff3333;
+    color: #ff3333;
+    padding: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1rem;
+    outline: none;
+}
+
+input[type="text"]:focus {
+    border-color: #ff0000;
+    box-shadow: 0 0 8px #ff0000;
+}
+
+button {
+    background-color: #ff0000;
+    color: #000;
+    border: none;
+    padding: 0 18px;
+    margin-left: 8px;
+    font-weight: bold;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    background-color: #ff6666;
+    box-shadow: 0 0 10px #ff0000;
+}
+
+.voice-btn {
+    background-color: #330000;
+    color: #ff3333;
+    border: 1px solid #ff0000;
+}
+
+.voice-btn.listening {
+    background-color: #ff0000;
+    color: #ffffff;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
 }
