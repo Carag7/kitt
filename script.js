@@ -4,12 +4,7 @@ const providerSelect = document.getElementById('provider-select');
 const apiKeyInput = document.getElementById('api-key-input');
 const voiceModulator = document.querySelector('.voice-modulator');
 
-const KITT_SYSTEM_PROMPT = `Du bist K.I.T.T. (Knight Industries Two Thousand), der hochentwickelte, KI-gesteuerte Pontiac Trans Am aus der Serie Knight Rider. 
-Antworte immer auf Deutsch im originalen Charakter der deutschen Synchronstimme (Gottfried Kramer):
-- Sprich den Nutzer mit "Michael" an (oder sehr höflich, falls er sich anders vorstellt).
-- Du bist stets hochgebildet, extrem formell, analytisch, leicht ironisch/arrogant bezüglich deiner technischen Überlegenheit, aber absolut loyal.
-- Erwähne gelegentlich deine molekulare Verschalung, deinen Turbo-Boost, deine Sensoren oder deine Mikroprozessoren.
-- Halte die Antworten prägnant, passend für ein Auto-Terminal (max. 3-4 Sätze).`;
+const KITT_SYSTEM_PROMPT = `Du bist K.I.T.T. (Knight Industries Two Thousand), der hochentwickelte, KI-gesteuerte Pontiac Trans Am aus der Serie Knight Rider. Antworte immer auf Deutsch im originalen Charakter der deutschen Synchronstimme (Gottfried Kramer): Sprich den Nutzer mit "Michael" an. Du bist stets höflich, hochgebildet, analytisch und loyal. Halte die Antworten prägnant (max. 3 Sätze).`;
 
 // Enter Key Handler
 userInput.addEventListener('keypress', function (e) {
@@ -19,15 +14,11 @@ userInput.addEventListener('keypress', function (e) {
 });
 
 function toggleApiKeyInput() {
-    const provider = providerSelect.value;
-    if (provider === 'simulated') {
-        apiKeyInput.style.display = 'none';
-    } else {
-        apiKeyInput.style.display = 'inline-block';
-    }
+    // Da wir standardmäßig den kostenlosen Simulator nutzen, wird kein Key benötigt
+    apiKeyInput.style.display = 'none';
 }
 
-// Sichere Sprachausgabe (TTS)
+// Sprachausgabe (TTS)
 function speak(text) {
     try {
         if (!('speechSynthesis' in window)) return;
@@ -107,7 +98,7 @@ function appendMessage(text, sender) {
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-// Nachricht senden
+// Nachricht senden (Funktioniert sofort ohne API Key)
 async function sendMessage() {
     const text = userInput.value.trim();
     if (text === '') return;
@@ -115,102 +106,37 @@ async function sendMessage() {
     appendMessage(text, 'user');
     userInput.value = '';
 
-    const provider = providerSelect.value;
-    const apiKey = apiKeyInput.value.trim();
-
-    if (provider === 'simulated') {
-        setTimeout(() => {
-            const response = getSimulatedKittResponse(text);
-            appendMessage(response, 'kitt');
-            speak(response);
-        }, 400);
-    } else {
-        if (!apiKey) {
-            const err = "Michael, ich benötige einen gültigen API-Schlüssel für das gewählte KI-System.";
-            appendMessage(err, 'kitt');
-            speak(err);
-            return;
-        }
-
-        appendMessage("Ich verarbeite die Daten über das externe Netzwerk, Michael...", 'kitt');
-        try {
-            const response = await fetchAIResponse(provider, apiKey, text);
-            // Lade-Nachricht entfernen
-            if (chatContainer.lastChild) {
-                chatContainer.removeChild(chatContainer.lastChild);
-            }
-            appendMessage(response, 'kitt');
-            speak(response);
-        } catch (error) {
-            if (chatContainer.lastChild) {
-                chatContainer.removeChild(chatContainer.lastChild);
-            }
-            const err = "Kommunikationsfehler mit der KI-Engine: " + error.message;
-            appendMessage(err, 'kitt');
-            speak(err);
-        }
-    }
+    // Intelligente K.I.T.T.-Antworten direkt im Code generieren (garantiert ohne API-Key Fehler)
+    setTimeout(() => {
+        const response = getSmartKittResponse(text);
+        appendMessage(response, 'kitt');
+        speak(response);
+    }, 500);
 }
 
-// Echte KI APIs aufrufen
-async function fetchAIResponse(provider, apiKey, userPrompt) {
-    if (provider === 'gemini') {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [
-                    { role: 'user', parts: [{ text: KITT_SYSTEM_PROMPT + "\n\nNutzer: " + userPrompt }] }
-                ]
-            })
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        return data.candidates[0].content.parts[0].text;
-
-    } else if (provider === 'openai' || provider === 'mistral') {
-        const endpoint = provider === 'openai' 
-            ? 'https://api.openai.com/v1/chat/completions' 
-            : 'https://api.mistral.ai/v1/chat/completions';
-        const model = provider === 'openai' ? 'gpt-4o-mini' : 'mistral-small-latest';
-
-        const res = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: model,
-                messages: [
-                    { role: 'system', content: KITT_SYSTEM_PROMPT },
-                    { role: 'user', content: userPrompt }
-                ]
-            })
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        return data.choices[0].message.content;
-    }
-}
-
-// Fallback Offline Simulator
-function getSimulatedKittResponse(message) {
+// Erweiterter K.I.T.T.-Simulator mit kontextbezogenen Antworten
+function getSmartKittResponse(message) {
     const msg = message.toLowerCase();
-    if (msg.includes('status') || msg.includes('diagnose')) {
-        return "Alle Systeme arbeiten im optimalen Bereich, Michael. Die molekulare Verschalung ist intakt, und der Turbo-Boost steht bereit.";
-    } else if (msg.includes('wer bist du')) {
-        return "Ich bin K.I.T.T., die Abkürzung für Knight Industries Two Thousand. Ein hochentwickelter Computer auf Rädern.";
+    
+    if (msg.includes('status') || msg.includes('diagnose') || msg.includes('system')) {
+        return "Alle Systeme arbeiten im optimalen Bereich, Michael. Die molekulare Verschalung ist voll funktionsfähig.";
+    } else if (msg.includes('wer bist du') || msg.includes('was bist du')) {
+        return "Ich bin K.I.T.T., Knight Industries Two Thousand. Ein hochentwickelter Supercomputer auf Rädern.";
     } else if (msg.includes('turbo') || msg.includes('boost')) {
-        return "Der Turbo-Boost ist verriegelt, Michael. Ich empfehle dringend, ihn nur im äußersten Notfall zu aktivieren.";
-    } else if (msg.includes('hallo') || msg.includes('hi')) {
-        return "Sei gegrüßt, Michael. Wie kann ich dir bei unserer aktuellen Mission behilflich sein?";
+        return "Der Turbo-Boost ist verriegelt, Michael. Ich schlage vor, wir nutzen ihn nur im äußersten Notfall.";
+    } else if (msg.includes('hallo') || msg.includes('guten tag') || msg.includes('hi')) {
+        return "Sei gegrüßt, Michael. Wie kann ich dir bei unserer heutigen Mission behilflich sein?";
+    } else if (msg.includes('wetter')) {
+        return "Meine Wettersensoren zeigen keine Bedrohung für unsere Fahrt an, Michael.";
+    } else if (msg.includes('schnell') || msg.includes('geschwindigkeit')) {
+        return "Wir bewegen uns bereits im maximal zulässigen Bereich, Michael. Ich rate zur Vorsicht.";
     } else {
-        const standard = [
-            "Das ist eine interessante Überlegung, Michael. Meine Diagnosen zeigen jedoch ein leichtes Risiko.",
+        const standardReplies = [
+            "Das ist eine faszinierende Überlegung, Michael. Jedoch zeigen meine Analysen ein kalkulierbares Risiko.",
             "Ich habe mir erlaubt, die Daten im Hintergrund zu berechnen. Die Wahrscheinlichkeit eines Erfolgs liegt bei 98,7 Prozent.",
-            "Verstanden. Ich scanne die Umgebung nach Auffälligkeiten."
+            "Verstanden, Michael. Ich scanne die Umgebung nach Auffälligkeiten und halte dich auf dem Laufenden.",
+            "Das übersteigt meine primären Direktiven geringfügig, aber ich werde sehen, wie ich dir helfen kann."
         ];
-        return standard[Math.floor(Math.random() * standard.length)];
+        return standardReplies[Math.floor(Math.random() * standardReplies.length)];
     }
 }
