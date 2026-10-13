@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K.I.T.T. Terminal - Knight Industries Two Thousand</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Scanner-Leiste oben -->
+    <div class="scanner-container">
+        <div class="scanner-light"></div>
+    </div>
+
+    <!-- Header / Voice Modulator Display -->
+    <header>
+        <h1>K.I.T.T. // KNIGHT INDUSTRIES TWO THOUSAND</h1>
+        <div class="voice-modulator">
+            <div class="v-bar"></div>
+            <div class="v-bar"></div>
+            <div class="v-bar"></div>
+        </div>
+    </header>
+
+    <!-- Chat Container -->
+    <div id="chat-container">
+        <div class="message kitt-msg">
+            System online. Hallo Michael. Ich bin K.I.T.T. Meine molekulare Verschalung ist intakt und alle Diagnosefunktionen laufen einwandfrei. Wie kann ich dir heute behilflich sein?
+        </div>
+    </div>
+
+    <!-- API Settings Bar -->
+    <div class="settings-bar">
+        <label for="provider-select">KI-Engine:</label>
+        <select id="provider-select" onchange="toggleApiKeyInput()">
+            <option value="simulated">Lokaler K.I.T.T. Simulator (Kostenlos)</option>
+            <option value="gemini">Google Gemini API (Empfohlen / Kostenlos)</option>
+            <option value="mistral">Mistral AI API (EU / DSGVO)</option>
+            <option value="openai">OpenAI ChatGPT API</option>
+        </select>
+        <input type="password" id="api-key-input" placeholder="API Key eingeben..." style="display:none;">
+    </div>
+
+    <!-- Controls / Input Area -->
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="Nachricht an K.I.T.T. eingeben..." autofocus>
+        <button onclick="sendMessage()">SENDEN</button>
+        <button id="voice-btn" class="voice-btn" onclick="toggleVoiceInput()" title="Spracheingabe aktivieren">🎙️</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
